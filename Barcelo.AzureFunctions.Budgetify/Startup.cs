@@ -1,6 +1,7 @@
 ﻿using Barcelo.AzureFunctions.Budgetify;
 using Barcelo.AzureFunctions.Budgetify.Functions;
 using Barcelo.AzureFunctions.Budgetify.Interfaces;
+using Barcelo.AzureFunctions.Budgetify.Models;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,7 @@ namespace Barcelo.AzureFunctions.Budgetify
         {
             builder.Services.AddTransient<ICreateBudgetRunner, CreateBudgetRunner>();
             builder.Services.AddTransient<ICreateUserRunner, CreateUserRunner>();
+            builder.Services.AddTransient<BudgetifyRepository>();
         }
     }
 }
