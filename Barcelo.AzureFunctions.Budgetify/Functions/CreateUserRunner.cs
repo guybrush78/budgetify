@@ -10,8 +10,8 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
     public class CreateUserRunner : ICreateUserRunner
     {
         private readonly IConfiguration _configuration;
-        private readonly ILogger<CreateBudgetRunner> _log;
-        public CreateUserRunner(IConfiguration configuration, ILogger<CreateBudgetRunner> log)
+        private readonly ILogger<CreateUserRunner> _log;
+        public CreateUserRunner(IConfiguration configuration, ILogger<CreateUserRunner> log)
         {
             _configuration = configuration;
             _log = log ?? throw new ArgumentNullException(nameof(log));
@@ -20,11 +20,9 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
         {
             try
             {
-                _log.LogInformation("Operación completada.");
-                Console.WriteLine("Operación completada.");
-                return true;
+                _log.LogInformation("Operación CreateBudgetRunner iniciada.");
 
-                var repo = new BudgetifyRepository(_configuration);
+                var repo = new BudgetifyRepository(_configuration, _log);
                 bool saveResult = await repo.SaveUserAsync(req);
                 return saveResult;
             }

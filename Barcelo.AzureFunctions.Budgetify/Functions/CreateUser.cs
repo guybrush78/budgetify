@@ -28,6 +28,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
         {
             try
             {
+                log.LogInformation("Inicio de Function CreateUser");
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 CreateUserRequest data = JsonConvert.DeserializeObject<CreateUserRequest>(requestBody);
 

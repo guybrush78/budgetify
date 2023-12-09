@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Barcelo.AzureFunctions.Budgetify.Functions;
+using Microsoft.Azure.WebJobs.Logging;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -11,10 +14,12 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
     public class BudgetifyRepository
     {
         private readonly IConfiguration _configuration;
+        private readonly ILogger<BudgetifyRepository> _log;
 
-        public BudgetifyRepository(IConfiguration configuration)
+        public BudgetifyRepository(IConfiguration configuration, ILogger<BudgetifyRepository> log)
         {
             _configuration = configuration;
+            _log = log;
         }
 
         public async Task<List<BudgetTable>> GetBudgetsByAdminId(int adminId)
@@ -170,6 +175,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         {
             try
             {
+                _log.LogInformation($"Inicio de Repository SaveUserAsync con {request.Email}");
                 string connectionString = _configuration.GetConnectionString("DefaultConnection");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -195,12 +201,12 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         await command.ExecuteNonQueryAsync();
                     }
                 }
-
+                _log.LogInformation($"Fin de Repository SaveUserAsync con {request.Email} OK");
                 return true; // La inserción fue exitosa
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Manejar cualquier excepción aquí
+                _log.LogError($"Fin de Repository SaveUserAsync con {request.Email} KO. {ex}");
                 return false; // La inserción falló
             }
         }
