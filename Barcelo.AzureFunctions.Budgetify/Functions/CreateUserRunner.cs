@@ -20,7 +20,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
         {
             try
             {
-                _log.LogInformation("Operación CreateBudgetRunner iniciada.");
+                _log.LogInformation($"Operación CreateUserRunner iniciada. {req.Email}");
 
                 var repo = new BudgetifyRepository(_configuration);
                 bool saveResult = await repo.SaveUserAsync(req);
@@ -28,6 +28,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
             }
             catch (Exception ex)
             {
+                _log.LogError($"Excepcion en CreateUserRunner {req.Email}: {ex}");
                 return false;
             }
         }

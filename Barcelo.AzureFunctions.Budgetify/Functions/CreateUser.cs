@@ -38,6 +38,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
             }
             catch (Exception ex)
             {
+                log.LogInformation($"Excepción en CreateUser: {ex}");
                 return new BadRequestObjectResult(new { Error = ex.Message });
             }
         }
