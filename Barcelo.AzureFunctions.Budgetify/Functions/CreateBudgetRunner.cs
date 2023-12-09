@@ -21,7 +21,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
             try
             {
                 _log.LogInformation("Operación CreateBudgetRunner completada.");
-                Console.WriteLine("Operación CreateBudgetRunner completada3.");
+                Console.WriteLine("Operación CreateBudgetRunner completada4.");
                 return true;
 
                 var repo = new BudgetifyRepository(_configuration);
