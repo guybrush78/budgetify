@@ -6,7 +6,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
 {
     public class CreateUserRequest
     {
-        public int Type { get; set; }
+        public string Type { get; set; }
         public string Name { get; set; }
         public string DNI { get; set; }
         public string Surnames { get; set; }

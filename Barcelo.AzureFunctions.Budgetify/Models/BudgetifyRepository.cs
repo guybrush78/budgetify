@@ -187,7 +187,8 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                 INSERT INTO [dbo].[User] 
                 ([Type], [Name], [DNI], [Surnames], [Email], [Login], [Token])
                 VALUES 
-                (@Type, @Name, @DNI, @Surnames, @Email, @Login, @Token)";
+                ((select top 1 Id from [dbo].[UserType] where UPPER([type]) = UPPER(@Type)), 
+                @Name, @DNI, @Surnames, @Email, @Login, @Token)";
 
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
