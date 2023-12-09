@@ -22,7 +22,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
             {
                 _log.LogInformation("Operación CreateBudgetRunner iniciada.");
 
-                var repo = new BudgetifyRepository(_configuration, _log);
+                var repo = new BudgetifyRepository(_configuration);
                 bool saveResult = await repo.SaveUserAsync(req);
                 return saveResult;
             }
