@@ -177,6 +177,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             {
                 _log.LogInformation($"Inicio de Repository SaveUserAsync con {request.Email}");
                 string connectionString = _configuration.GetConnectionString("DefaultConnection");
+                _log.LogInformation($"ConnectionString: {connectionString}");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
