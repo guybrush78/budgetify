@@ -51,11 +51,14 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
                     token = string.Empty;
                 }
 
+                var jsondata = new { token };
+                string jsondataResponse = jsondata.ToString();
+
                 var jsonResponse = new
                 {
                     statuscode,
                     statusMessage,
-                    data = new { token }
+                    data = jsondataResponse
                 };
 
                 return new JsonResult(jsonResponse)
