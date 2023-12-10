@@ -214,5 +214,39 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         }
 
 
+        public async Task<bool> LoginAsync(LoginRequest userpwd)
+        {
+            try
+            {
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    string login = userpwd.username.ToString();
+                    string pwd = userpwd.password.ToString();
+
+                    string query = $"SELECT count(1) FROM [dbo].[User] WHERE Login = @login AND Token = @pwd";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@login", login);
+                        command.Parameters.AddWithValue("@pwd", pwd);
+
+                        int count = (int)command.ExecuteScalar();
+
+                        bool existeUsuario = count > 0;
+                        return existeUsuario;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError($"Fin de Repository Login con {userpwd.username} KO. {ex}");
+                return false;
+            }
+        }
+
+
     }
 }
