@@ -15,6 +15,7 @@ namespace Barcelo.AzureFunctions.Budgetify
         {
             builder.Services.AddTransient<ICreateBudgetRunner, CreateBudgetRunner>();
             builder.Services.AddTransient<ICreateUserRunner, CreateUserRunner>();
+            builder.Services.AddTransient<ILoginRunner, LoginRunner>();
             builder.Services.AddTransient<BudgetifyRepository>();
         }
     }
