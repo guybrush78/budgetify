@@ -34,12 +34,51 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
 
                 var result = await this.runner.RunAsync(data);
 
-                return result ? new OkResult() : (IActionResult)new BadRequestResult();
+                int statuscode;
+                string statusMessage;
+                Guid newGuid = Guid.NewGuid();
+
+                if (result)
+                {
+                    statuscode = 200;
+                    statusMessage = "User created successfully";
+                } 
+                else 
+                {
+                    statuscode = 400;
+                    statusMessage = "User created fail";
+                }
+
+                var jsonResponse = new 
+                {
+                    statuscode,
+                    statusMessage,
+                    data = new { token = newGuid }
+                };
+
+                return new JsonResult(jsonResponse)
+                {
+                    StatusCode = statuscode
+                };
+
             }
             catch (Exception ex)
             {
                 log.LogInformation($"Excepción en CreateUser: {ex}");
-                return new BadRequestObjectResult(new { Error = ex.Message });
+                int statuscode = 500;
+                string statusMessage = "Excepcion en el servicio";
+                Guid newGuid = Guid.NewGuid();
+                var jsonResponse = new
+                {
+                    statuscode,
+                    statusMessage,
+                    data = new { token = newGuid }
+                };
+
+                return new JsonResult(jsonResponse)
+                {
+                    StatusCode = statuscode
+                };
             }
         }
     }
