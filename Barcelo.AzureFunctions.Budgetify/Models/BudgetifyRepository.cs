@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -215,6 +216,73 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         }
 
 
+        public async Task<bool> SaveSessionId(string login, string token)
+        {
+            try
+            {
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string query = @"
+                        insert into [dbo].[Sessions] (UserId, Token) values 
+                        ((select top 1 Id from [dbo].[User] where [login] = @login order by Id desc), @token)";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@login", login);
+                        command.Parameters.AddWithValue("@token", token);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+                _log.LogInformation($"Fin de Repository SaveSessionId OK");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _log.LogError($"Fin de Repository SaveSessionId con KO. {ex}");
+                return false;
+            }
+        }
+
+
+        public async Task<string> SessionByLogin(string login)
+        {
+            try
+            {
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+                    string query = $"select TOP 1 Token from [dbo].[Sessions] where UserId = (select top 1 id from [User] where [login] = @login) and ExpirationDate > GETDATE() order by Id desc";
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@login", login);
+
+                        object tokenObj = await command.ExecuteScalarAsync();
+
+                        if (tokenObj != null && tokenObj != DBNull.Value)
+                        {
+                            string sessionId = Convert.ToString(tokenObj);
+                            return sessionId;
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogError($"Repository SessionId error with {login} KO. {ex}");
+                return null;
+            }
+        }
+
         public async Task<LoginResponse> LoginAsync(LoginRequest userpwd)
         {
             try
@@ -239,7 +307,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         if (roleObj != null && roleObj != DBNull.Value)
                         {
                             int role = Convert.ToInt32(roleObj);
-                            
+
                             Guid newGuid = Guid.NewGuid();
                             string sessionId = $"{newGuid}";
 
@@ -249,6 +317,10 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                                 sessionId = sessionId,
                                 role = role
                             };
+
+                            //Guardamos la sesión cada vez que hace login
+                            string token = $"{role}{sessionId}";
+                            await this.SaveSessionId(login, token);
 
                             return response;
                         }
@@ -261,7 +333,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             }
             catch (Exception ex)
             {
-                _log.LogError($"Fin de Repository Login con {userpwd.username} KO. {ex}");
+                _log.LogError($"Repository Login error with {userpwd.username} KO. {ex}");
                 return null;
             }
         }
