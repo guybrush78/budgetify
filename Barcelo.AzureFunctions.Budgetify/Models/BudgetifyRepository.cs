@@ -1,4 +1,5 @@
 ﻿using Barcelo.AzureFunctions.Budgetify.Functions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -214,7 +215,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         }
 
 
-        public async Task<bool> LoginAsync(LoginRequest userpwd)
+        public async Task<LoginResponse> LoginAsync(LoginRequest userpwd)
         {
             try
             {
@@ -226,24 +227,42 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                     string login = userpwd.username.ToString();
                     string pwd = userpwd.password.ToString();
 
-                    string query = $"SELECT count(1) FROM [dbo].[User] WHERE Login = @login AND Token = @pwd";
+                    string query = $"SELECT type FROM [dbo].[User] WHERE Login = @login AND Token = @pwd";
 
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@login", login);
                         command.Parameters.AddWithValue("@pwd", pwd);
 
-                        int count = (int)command.ExecuteScalar();
+                        object roleObj = await command.ExecuteScalarAsync();
 
-                        bool existeUsuario = count > 0;
-                        return existeUsuario;
+                        if (roleObj != null && roleObj != DBNull.Value)
+                        {
+                            int role = Convert.ToInt32(roleObj);
+                            
+                            Guid newGuid = Guid.NewGuid();
+                            string sessionId = $"{newGuid}";
+
+                            // Crear y devolver la respuesta
+                            var response = new LoginResponse
+                            {
+                                sessionId = sessionId,
+                                role = role
+                            };
+
+                            return response;
+                        }
+                        else
+                        {
+                            return null;
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
                 _log.LogError($"Fin de Repository Login con {userpwd.username} KO. {ex}");
-                return false;
+                return null;
             }
         }
 

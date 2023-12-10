@@ -5,6 +5,6 @@ namespace Barcelo.AzureFunctions.Budgetify.Interfaces
 {
     public interface ILoginRunner
     {
-        Task<bool> RunAsync(LoginRequest req);
+        Task<string> RunAsync(LoginRequest req);
     }
 }

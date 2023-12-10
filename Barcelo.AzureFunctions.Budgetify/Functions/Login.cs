@@ -32,28 +32,30 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 LoginRequest data = JsonConvert.DeserializeObject<LoginRequest>(requestBody);
 
-                bool result = await this.runner.RunAsync(data);
+                string sessionId = await this.runner.RunAsync(data);
 
                 int statuscode;
                 string statusMessage;
-                Guid newGuid = Guid.NewGuid();
+                string token;
 
-                if (result)
+                if (!string.IsNullOrEmpty(sessionId))
                 {
                     statuscode = 200;
                     statusMessage = "Login successfully";
+                    token = sessionId;
                 }
                 else
                 {
                     statuscode = 400;
                     statusMessage = "Login fail";
+                    token = string.Empty;
                 }
 
                 var jsonResponse = new
                 {
                     statuscode,
                     statusMessage,
-                    data = new { token = newGuid }
+                    data = new { token }
                 };
 
                 return new JsonResult(jsonResponse)
@@ -67,12 +69,11 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
                 log.LogInformation($"Excepción en Login: {ex}");
                 int statuscode = 500;
                 string statusMessage = "Excepcion en el servicio";
-                Guid newGuid = Guid.NewGuid();
                 var jsonResponse = new
                 {
                     statuscode,
                     statusMessage,
-                    data = new { token = newGuid }
+                    data = new { token = string.Empty }
                 };
 
                 return new JsonResult(jsonResponse)

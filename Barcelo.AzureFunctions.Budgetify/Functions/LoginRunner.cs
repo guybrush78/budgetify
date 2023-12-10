@@ -16,20 +16,21 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
             _configuration = configuration;
             _log = log ?? throw new ArgumentNullException(nameof(log));
         }
-        public async Task<bool> RunAsync(LoginRequest req)
+        public async Task<string> RunAsync(LoginRequest req)
         {
             try
             {
                 _log.LogInformation($"Operación LoginRunner iniciada. {req.username}");
 
                 var repo = new BudgetifyRepository(_configuration, _log);
-                bool saveResult = await repo.LoginAsync(req);
-                return saveResult;
+                LoginResponse saveResult = await repo.LoginAsync(req);
+                string sessionId = $"{saveResult.role}{saveResult.sessionId}";
+                return sessionId;
             }
             catch (Exception ex)
             {
                 _log.LogError($"Excepcion en LoginRunner {req.username}: {ex}");
-                return false;
+                return string.Empty;
             }
         }
     }
