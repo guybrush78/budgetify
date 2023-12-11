@@ -32,7 +32,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
                 CreateBudgetRequest data = JsonConvert.DeserializeObject<CreateBudgetRequest>(requestBody);
                 
                 var result = await this.runner.RunAsync(data);
-
+                
                 return result ? new OkResult() : (IActionResult)new BadRequestResult();
             }
             catch (Exception ex)
