@@ -13,6 +13,7 @@ namespace Barcelo.AzureFunctions.Budgetify
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
+            builder.Services.AddTransient<IGetBudgetsByAdminIdRunner, GetBudgetsByAdminIdRunner>();
             builder.Services.AddTransient<ICreateBudgetRunner, CreateBudgetRunner>();
             builder.Services.AddTransient<ICreateUserRunner, CreateUserRunner>();
             builder.Services.AddTransient<ILoginRunner, LoginRunner>();
