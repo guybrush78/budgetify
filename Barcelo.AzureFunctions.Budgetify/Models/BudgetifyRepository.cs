@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.Text;
 using System.Threading.Tasks;
@@ -100,11 +101,11 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         command.Parameters.AddWithValue("@OrganizationId", request.OrganizationId ?? (object)DBNull.Value);
                         command.Parameters.AddWithValue("@Title", request.Title);
                         command.Parameters.AddWithValue("@Description", request.Description);
-                        command.Parameters.AddWithValue("@From", request.From);
-                        command.Parameters.AddWithValue("@To", request.To);
-                        command.Parameters.AddWithValue("@ProposalFrom", request.ProposalFrom);
-                        command.Parameters.AddWithValue("@ProposalTo", request.ProposalTo);
-                        command.Parameters.AddWithValue("@ContractFile", request.ContractFile ?? (object)DBNull.Value);
+                        command.Parameters.Add("@From", SqlDbType.DateTime).Value = request.From;
+                        command.Parameters.Add("@To", SqlDbType.DateTime).Value = request.To;
+                        command.Parameters.Add("@ProposalFrom", SqlDbType.DateTime).Value = request.ProposalFrom;
+                        command.Parameters.Add("@ProposalTo", SqlDbType.DateTime).Value = request.ProposalTo;
+                        command.Parameters.Add("@ContractFile", SqlDbType.VarBinary).Value = (object)request.ContractFile ?? DBNull.Value;
                         command.Parameters.AddWithValue("@ContractName", request.ContractName ?? (object)DBNull.Value);
 
                         await command.ExecuteReaderAsync();
