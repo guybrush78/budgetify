@@ -32,12 +32,51 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
                 CreateBudgetRequest data = JsonConvert.DeserializeObject<CreateBudgetRequest>(requestBody);
                 
                 var result = await this.runner.RunAsync(data);
-                
-                return result ? new OkResult() : (IActionResult)new BadRequestResult();
+
+                int statuscode;
+                string statusMessage;
+                Guid newGuid = Guid.NewGuid();
+
+                if (result)
+                {
+                    statuscode = 200;
+                    statusMessage = "Budget created successfully";
+                }
+                else
+                {
+                    statuscode = 400;
+                    statusMessage = "Budget created fail";
+                }
+
+                var jsonResponse = new
+                {
+                    statuscode,
+                    statusMessage,
+                    data = new { token = newGuid }
+                };
+
+                return new JsonResult(jsonResponse)
+                {
+                    StatusCode = statuscode
+                };
             }
             catch (Exception ex)
             {
-                return new BadRequestObjectResult(new { Error = ex.Message });
+                log.LogInformation($"Excepción en CreateBudget: {ex}");
+                int statuscode = 500;
+                string statusMessage = "Excepcion en el servicio";
+                Guid newGuid = Guid.NewGuid();
+                var jsonResponse = new
+                {
+                    statuscode,
+                    statusMessage,
+                    data = new { token = newGuid }
+                };
+
+                return new JsonResult(jsonResponse)
+                {
+                    StatusCode = statuscode
+                };
             }
         }
     }
