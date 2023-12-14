@@ -30,6 +30,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         {
             try
             {
+                _log.LogInformation($"Inicio de Repository GetBudgetsByAdminId con adminId:{adminId}");
                 string connectionString = _configuration.GetConnectionString("DefaultConnection");
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -72,6 +73,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             }
             catch (Exception ex)
             {
+                _log.LogInformation($"EXCEPTION Repository GetBudgetsByAdminId con adminId:{adminId} - {ex}");
                 return null;
             }
 
