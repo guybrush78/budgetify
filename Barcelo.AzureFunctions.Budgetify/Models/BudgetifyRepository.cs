@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs.Logging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -296,38 +297,58 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                     string login = userpwd.username.ToString();
                     string pwd = userpwd.password.ToString();
 
-                    string query = $"SELECT type FROM [dbo].[User] WHERE Login = @login AND Token = @pwd";
+                    string query = "SELECT Id, Name, Email, Login, type " +
+                                   "FROM [dbo].[User] " +
+                                   "WHERE Login = @login AND Token = @pwd";
 
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@login", login);
                         command.Parameters.AddWithValue("@pwd", pwd);
 
-                        object roleObj = await command.ExecuteScalarAsync();
-
-                        if (roleObj != null && roleObj != DBNull.Value)
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
                         {
-                            int role = Convert.ToInt32(roleObj);
-
-                            Guid newGuid = Guid.NewGuid();
-                            string sessionId = $"{newGuid}";
-
-                            // Crear y devolver la respuesta
-                            var response = new LoginResponse
+                            if (reader.Read())
                             {
-                                sessionId = sessionId,
-                                role = role
-                            };
+                                int userId = reader.GetInt32(reader.GetOrdinal("Id"));
+                                string userName = reader.GetString(reader.GetOrdinal("Name"));
+                                string userEmail = reader.GetString(reader.GetOrdinal("Email"));
+                                string userLogin = reader.GetString(reader.GetOrdinal("Login"));
+                                int role = reader.GetInt32(reader.GetOrdinal("type"));
 
-                            //Guardamos la sesión cada vez que hace login
-                            string token = $"{role}{sessionId}";
-                            await this.SaveSessionId(login, token);
+                                Guid newGuid = Guid.NewGuid();
+                                string sessionId = $"{newGuid}";
 
-                            return response;
-                        }
-                        else
-                        {
-                            return null;
+                                //Guardamos la sesión cada vez que hace login
+                                string token = $"{role}{sessionId}";
+                                await this.SaveSessionId(login, token);
+
+                                var userdata = new
+                                {
+                                    Id = userId,
+                                    Name = userName,
+                                    Email = userEmail,
+                                    Login = userLogin,
+                                    Token = token
+                                };
+                                string jsonUserData = JsonConvert.SerializeObject(userdata);
+
+                                // Crear y devolver la respuesta
+                                var response = new LoginResponse
+                                {
+                                    sessionId = sessionId,
+                                    role = role,
+                                    userData = jsonUserData
+                                };
+
+                                
+
+                                return response;
+                            }
+                            else
+                            {
+                                return null;
+                            }
                         }
                     }
                 }

@@ -24,8 +24,8 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
 
                 var repo = new BudgetifyRepository(_configuration, _log);
                 LoginResponse saveResult = await repo.LoginAsync(req);
-                string sessionId = $"{saveResult.role}{saveResult.sessionId}";
-                return sessionId;
+                string response = saveResult.userData;
+                return response;
             }
             catch (Exception ex)
             {

@@ -10,5 +10,6 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
     {
         public string sessionId { get; set; }
         public int role { get; set; }
+        public string userData { get; set; }
     }
 }

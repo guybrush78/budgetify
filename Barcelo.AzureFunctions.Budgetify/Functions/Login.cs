@@ -32,33 +32,27 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 LoginRequest data = JsonConvert.DeserializeObject<LoginRequest>(requestBody);
 
-                string sessionId = await this.runner.RunAsync(data);
+                string userData = await this.runner.RunAsync(data);
 
                 int statuscode;
                 string statusMessage;
-                string token;
 
-                if (!string.IsNullOrEmpty(sessionId))
+                if (!string.IsNullOrEmpty(userData))
                 {
                     statuscode = 200;
                     statusMessage = "Login successfully";
-                    token = sessionId;
                 }
                 else
                 {
                     statuscode = 400;
                     statusMessage = "Login fail";
-                    token = string.Empty;
                 }
-
-                var jsondata = new { token };
-                string jsondataResponse = jsondata.ToString();
 
                 var jsonResponse = new
                 {
                     statuscode,
                     statusMessage,
-                    data = jsondataResponse
+                    data = userData
                 };
 
                 return new JsonResult(jsonResponse)
