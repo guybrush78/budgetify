@@ -35,9 +35,11 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
             try
             {
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                string data = JsonConvert.DeserializeObject<string>(requestBody);
+                log.LogInformation($"GetBudgetsByAdminId request: {requestBody}");
+                AdminIdModel data = JsonConvert.DeserializeObject<AdminIdModel>(requestBody);
 
-                var result = await this.runner.RunAsync(data);
+                string adminId = data.AdminId.ToString();
+                var result = await this.runner.RunAsync(adminId);
 
                 if (result == null || !result.Any()) 
                 {
@@ -83,5 +85,11 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
                 };
             }
         }
+        private class AdminIdModel
+        {
+            public int AdminId { get; set; }
+        }
     }
+
+    
 }
