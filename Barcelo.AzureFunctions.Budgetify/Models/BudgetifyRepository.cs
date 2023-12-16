@@ -25,6 +25,49 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             _configuration = configuration;
             _log = log;
         }
+        public async Task<List<BudgetOptionsTable>> GetOptionsByBudgetId(int BudgetId)
+        {
+            try
+            {
+                _log.LogInformation($"Inicio de Repository GetOptionsByBudgetId con BudgetId:{BudgetId}");
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = $"SELECT * FROM [dbo].[BudgetOptions] WHERE BudgetId = {BudgetId}";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            List<BudgetOptionsTable> BudgetOptions = new List<BudgetOptionsTable>();
+
+                            while (await reader.ReadAsync())
+                            {
+                                BudgetOptionsTable BudgetOption = new BudgetOptionsTable
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                    BudgetId = reader.GetInt32(reader.GetOrdinal("BudgetId")),
+                                    OptionDescription = reader.GetString(reader.GetOrdinal("OptionDescription"))                                    
+                                };
+
+                                BudgetOptions.Add(BudgetOption);
+                            }
+
+                            return BudgetOptions;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogInformation($"EXCEPTION Repository GetOptionsByBudgetId with budgetId:{BudgetId} - {ex}");
+                return null;
+            }
+
+        }
+
 
         public async Task<List<BudgetTable>> GetBudgetsByAdminId(int adminId)
         {
