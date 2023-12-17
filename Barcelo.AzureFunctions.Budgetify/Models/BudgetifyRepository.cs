@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -134,12 +135,13 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                     await connection.OpenAsync();
 
                     string query = @"
-                INSERT INTO [dbo].[Budget] 
-                ([UserId], [OrganizationId], [Title], [Description], [From], [To], 
-                [ProposalFrom], [ProposalTo], [ContractFile], [ContractName], [CreateDate], [ModifyDate])
-                VALUES 
-                (@UserId, @OrganizationId, @Title, @Description, @From, @To, 
-                @ProposalFrom, @ProposalTo, @ContractFile, @ContractName, GETDATE(), GETDATE())";
+                        INSERT INTO [dbo].[Budget] 
+                        ([UserId], [OrganizationId], [Title], [Description], [From], [To], 
+                        [ProposalFrom], [ProposalTo], [ContractFile], [ContractName], [CreateDate], [ModifyDate])
+                        OUTPUT INSERTED.Id
+                        VALUES 
+                        (@UserId, @OrganizationId, @Title, @Description, @From, @To, 
+                        @ProposalFrom, @ProposalTo, @ContractFile, @ContractName, GETDATE(), GETDATE())";
 
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
@@ -154,7 +156,13 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         command.Parameters.Add("@ContractFile", SqlDbType.VarBinary).Value = (object)request.ContractFile ?? DBNull.Value;
                         command.Parameters.AddWithValue("@ContractName", request.ContractName ?? (object)DBNull.Value);
 
-                        await command.ExecuteReaderAsync();
+                        int? insertedId = (int?)await command.ExecuteScalarAsync();
+                        //Guardamos ahora las opciones
+                        if (insertedId.HasValue)
+                        {
+                            int budgetId = insertedId.Value;
+                            await SaveBudgetOptions(request, budgetId);
+                        }
                     }
                 }
 
@@ -164,6 +172,51 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             {
                 return false;
             }
+        }
+
+        public async Task<bool> SaveBudgetOptions(CreateBudgetRequest request, int IdNewBudget)
+        {
+            try
+            {
+                List<string> Options = request.Options;
+                if (Options.Any(option => !IsValidOption(option)))
+                {
+                    throw new ArgumentException("Inyección de SQL detectada");
+                }
+
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string values = string.Join(",", Options.Select(option => $"({IdNewBudget}, '{option}')"));
+
+                    string query = $"insert into [BudgetOptions] (BudgetId, OptionDescription) values {values}";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private bool IsValidOption(string option)
+        {
+            string[] forbiddenPatterns = { "'", ";", "--", "/*", "*/", "xp_", "exec", "sp_", "insert", "update", "delete", "select" };
+
+            if (forbiddenPatterns.Any(pattern => option.Contains(pattern, StringComparison.OrdinalIgnoreCase)))
+            {
+                return false;
+            }
+            return !string.IsNullOrEmpty(option) && option.Length <= 255;
         }
 
 
