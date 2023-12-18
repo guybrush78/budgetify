@@ -161,7 +161,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         if (insertedId.HasValue)
                         {
                             int budgetId = insertedId.Value;
-                            await SaveBudgetOptions(request, budgetId);
+                            await SaveBudgetOptions(request.Options, budgetId);
                         }
                     }
                 }
@@ -170,15 +170,15 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             }
             catch (Exception ex)
             {
+                _log.LogError($"Repository SaveBudget Error with Title: {request.Title}. {ex}");
                 return false;
             }
         }
 
-        public async Task<bool> SaveBudgetOptions(CreateBudgetRequest request, int IdNewBudget)
+        public async Task<bool> SaveBudgetOptions(List<string> Options, int IdNewBudget)
         {
             try
             {
-                List<string> Options = request.Options;
                 if (Options.Any(option => !IsValidOption(option)))
                 {
                     throw new ArgumentException("Inyección de SQL detectada");
@@ -204,6 +204,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             }
             catch (Exception ex)
             {
+                _log.LogError($"Repository SaveBudgetOptions Error with budgetId: {IdNewBudget}. {ex}");
                 return false;
             }
         }
@@ -218,6 +219,106 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             }
             return !string.IsNullOrEmpty(option) && option.Length <= 255;
         }
+
+
+        public async Task<bool> DeleteBudgetOptions(List<string> KeysToDelete, int BudgetId)
+        {
+            try
+            {
+                if (KeysToDelete.Any(key => string.IsNullOrEmpty(key) || !IsValidOption(key)))
+                {
+                    throw new ArgumentException("Claves inválidas detectadas");
+                }
+
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string keysString = string.Join(",", KeysToDelete.Select(key => Convert.ToInt32(key)));
+
+                    string query = $"DELETE FROM [BudgetOptions] WHERE BudgetId = @BudgetId AND Id IN ({keysString})";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@BudgetId", BudgetId);
+                        await command.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _log.LogError($"Repository DeleteBudgetOptions Error with budgetId: {BudgetId}. {ex}");
+                return false;
+            }
+        }
+
+
+        public async Task<bool> EditBudget(EditBudgetRequest request)
+        {
+            try
+            {
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string query = @"
+                        UPDATE [Budget] SET [Title] = @Title, [Description] = @Description, [From] = @From, [To] = @To,
+                        [ProposalFrom] = @ProposalFrom, [ProposalTo] = @ProposalTo
+                        WHERE [Id] = @BudgetId";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@BudgetId", request.BudgetId);
+                        command.Parameters.AddWithValue("@Title", request.Title);
+                        command.Parameters.AddWithValue("@Description", request.Description);
+                        command.Parameters.Add("@From", SqlDbType.DateTime).Value = request.From;
+                        command.Parameters.Add("@To", SqlDbType.DateTime).Value = request.To;
+                        command.Parameters.Add("@ProposalFrom", SqlDbType.DateTime).Value = request.ProposalFrom;
+                        command.Parameters.Add("@ProposalTo", SqlDbType.DateTime).Value = request.ProposalTo;
+
+                        int rowsAffected = await command.ExecuteNonQueryAsync();
+                        //Actualizamos ahora las opciones
+                        if (rowsAffected > 0)
+                        {
+                            int budgetId = request.BudgetId;
+                            Dictionary<string, string> options = request.Options;
+
+                            //Los valores cuyo Key = 0, son nuevos valores por lo que se hace insert
+                            List<string> newOptions = options
+                                .Where(pair => pair.Key == "0")
+                                .Select(pair => pair.Value)
+                                .ToList();
+                            await SaveBudgetOptions(newOptions, budgetId);
+
+                            //Los valores cuyo Value finaliza en #DELETE# son borrados
+                            List<string> removeOptions = options
+                                .Where(pair => pair.Value.EndsWith("#DELETE#"))
+                                .Select(pair => pair.Key)
+                                .ToList();
+                            await DeleteBudgetOptions(removeOptions, budgetId);
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _log.LogError($"Repository EditBudget Error with budgetId: {request.BudgetId}. {ex}");
+                return false;
+            }
+        }
+
 
 
         public async Task<BudgetTable> GetBudgetByIdAsync(int budgetId)
@@ -265,9 +366,9 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Manejar cualquier excepción aquí
+                _log.LogError($"Repository GetBudgetByIdAsync Error with budgetId: {budgetId}. {ex}");
                 return null;
             }
         }
