@@ -35,6 +35,6 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         [StringLength(100)]
         public string ContractName { get; set; }
 
-        public Dictionary<string, string> Options { get; set; } //[{key:value},{key:value}...]
+        public List<Dictionary<string, string>> Options { get; set; } //[{key:value},{key:value}...]
     }
 }

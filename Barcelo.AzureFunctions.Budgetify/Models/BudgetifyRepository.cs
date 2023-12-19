@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
@@ -259,6 +260,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
 
         public async Task<bool> EditBudget(EditBudgetRequest request)
         {
+            int rowsAffected = 0;
             try
             {
                 string connectionString = _configuration.GetConnectionString("DefaultConnection");
@@ -279,35 +281,36 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         command.Parameters.AddWithValue("@Description", request.Description);
                         command.Parameters.Add("@From", SqlDbType.DateTime).Value = request.From;
                         command.Parameters.Add("@To", SqlDbType.DateTime).Value = request.To;
-                        command.Parameters.Add("@ProposalFrom", SqlDbType.DateTime).Value = request.ProposalFrom;
-                        command.Parameters.Add("@ProposalTo", SqlDbType.DateTime).Value = request.ProposalTo;
+                        command.Parameters.Add("@ProposalFrom", SqlDbType.DateTime).Value = request.From; //Por ahora la misma fecha
+                        command.Parameters.Add("@ProposalTo", SqlDbType.DateTime).Value = request.To; //Por ahora la misma fecha
 
-                        int rowsAffected = await command.ExecuteNonQueryAsync();
-                        //Actualizamos ahora las opciones
-                        if (rowsAffected > 0)
-                        {
-                            int budgetId = request.BudgetId;
-                            Dictionary<string, string> options = request.Options;
+                        rowsAffected = command.ExecuteNonQuery();
+                    } //Cerramos conexión porque ahora abriremos otra
 
-                            //Los valores cuyo Key = 0, son nuevos valores por lo que se hace insert
-                            List<string> newOptions = options
-                                .Where(pair => pair.Key == "0")
-                                .Select(pair => pair.Value)
-                                .ToList();
-                            await SaveBudgetOptions(newOptions, budgetId);
+                    //Actualizamos ahora las opciones
+                    if (rowsAffected > 0)
+                    {
+                        int budgetId = request.BudgetId;
+                        List<Dictionary<string, string>> options = request.Options;
 
-                            //Los valores cuyo Value finaliza en #DELETE# son borrados
-                            List<string> removeOptions = options
-                                .Where(pair => pair.Value.EndsWith("#DELETE#"))
-                                .Select(pair => pair.Key)
-                                .ToList();
-                            await DeleteBudgetOptions(removeOptions, budgetId);
-                        }
-                        else
-                        {
-                            return false;
-                        }
+                        //Los valores cuyo Key = 0, son nuevos valores por lo que se hace insert
+                        List<string> newOptions = options
+                            .Where(dict => dict.ContainsKey("0"))
+                            .Select(dict => dict["0"])
+                            .ToList();
+                        await SaveBudgetOptions(newOptions, budgetId);
+
+                        //Los valores cuyo Value finaliza en #ERASE# son borrados
+                        List<string> removeOptions = options
+                            .SelectMany(dict => dict.Where(kvp => kvp.Value.Contains("#ERASE#")).Select(kvp => kvp.Key))
+                            .ToList();
+                        await DeleteBudgetOptions(removeOptions, budgetId);
                     }
+                    else
+                    {
+                        return false;
+                    }
+                    
                 }
 
                 return true;
