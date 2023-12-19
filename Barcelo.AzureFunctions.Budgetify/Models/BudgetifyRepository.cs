@@ -192,6 +192,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                     await connection.OpenAsync();
 
                     string values = string.Join(",", Options.Select(option => $"({IdNewBudget}, '{option}')"));
+                    _log.LogInformation($"Options for values in insert sql: {values}");
 
                     string query = $"insert into [BudgetOptions] (BudgetId, OptionDescription) values {values}";
 
