@@ -241,7 +241,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                     string keysString = string.Join(",", KeysToDelete.Select(key => Convert.ToInt32(key)));
 
                     string query = $"DELETE FROM [BudgetOptions] WHERE BudgetId = @BudgetId AND Id IN ({keysString})";
-
+                    _log.LogInformation(query);
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
                         command.Parameters.AddWithValue("@BudgetId", BudgetId);
