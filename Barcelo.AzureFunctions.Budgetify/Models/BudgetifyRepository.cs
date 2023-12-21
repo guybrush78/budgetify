@@ -125,6 +125,63 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         }
 
 
+        public async Task<List<UserBudgetTable>> GetBudgetsByUserId(int UserId)
+        {
+            try
+            {
+                _log.LogInformation($"Inicio de Repository GetBudgetsByUserId con UserId:{UserId}");
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string query = $"select [dbo].[Budget].*, [dbo].[Voting].BudgetOption from [dbo].[Budget] " +
+                        $"inner join [dbo].[Voting] on [dbo].[Budget].Id = [dbo].[Voting].BudgetId " +
+                        $"where [dbo].[Voting].UserId = {UserId})";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
+                        {
+                            List<UserBudgetTable> budgets = new List<UserBudgetTable>();
+
+                            while (await reader.ReadAsync())
+                            {
+                                UserBudgetTable budget = new UserBudgetTable
+                                {
+                                    Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                                    UserId = reader.GetInt32(reader.GetOrdinal("UserId")),
+                                    OrganizationId = reader.IsDBNull(reader.GetOrdinal("OrganizationId")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("OrganizationId")),
+                                    Title = reader.GetString(reader.GetOrdinal("Title")),
+                                    Description = reader.GetString(reader.GetOrdinal("Description")),
+                                    From = reader.GetDateTime(reader.GetOrdinal("From")),
+                                    To = reader.GetDateTime(reader.GetOrdinal("To")),
+                                    ProposalFrom = reader.GetDateTime(reader.GetOrdinal("ProposalFrom")),
+                                    ProposalTo = reader.GetDateTime(reader.GetOrdinal("ProposalTo")),
+                                    ContractFile = reader.IsDBNull(reader.GetOrdinal("ContractFile")) ? null : (byte[])reader["ContractFile"],
+                                    ContractName = reader.IsDBNull(reader.GetOrdinal("ContractName")) ? null : reader.GetString(reader.GetOrdinal("ContractName")),
+                                    CreateDate = reader.GetDateTime(reader.GetOrdinal("CreateDate")),
+                                    ModifyDate = reader.GetDateTime(reader.GetOrdinal("ModifyDate")),
+                                    BudgetOption = reader.IsDBNull(reader.GetOrdinal("BudgetOption")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("BudgetOption"))
+                                };
+
+                                budgets.Add(budget);
+                            }
+
+                            return budgets;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _log.LogInformation($"EXCEPTION Repository GetBudgetsByUserId con UserId:{UserId} - {ex}");
+                return null;
+            }
+
+        }
+
+
         public async Task<bool> SaveBudget(CreateBudgetRequest request)
         {
             try
