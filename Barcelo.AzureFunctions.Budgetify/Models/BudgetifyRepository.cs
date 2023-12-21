@@ -137,7 +137,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
 
                     string query = $"select [dbo].[Budget].*, [dbo].[Voting].BudgetOption from [dbo].[Budget] " +
                         $"inner join [dbo].[Voting] on [dbo].[Budget].Id = [dbo].[Voting].BudgetId " +
-                        $"where [dbo].[Voting].UserId = {UserId})";
+                        $"where [dbo].[Voting].UserId = {UserId}";
 
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
