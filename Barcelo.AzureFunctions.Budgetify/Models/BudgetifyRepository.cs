@@ -620,6 +620,51 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             }
         }
 
+        public async Task<string> UserBudgetVoting(UserBudgetVotingRequest req)
+        {
+            int rowsAffected = 0;
+            try
+            {
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string newToken = Guid.NewGuid().ToString();
+                    string query = "UPDATE [Voting] SET [BudgetOption] = @OptionId, [AutenticationToken] = @NewToken " +
+                         "WHERE [BudgetId] = @BudgetId AND [UserId] = @UserId " +
+                         "AND EXISTS (SELECT 1 FROM BudgetOptions WHERE [BudgetId] = @BudgetId AND Id = @OptionId)";
+
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@BudgetId", req.BudgetId);
+                        command.Parameters.AddWithValue("@UserId", int.Parse(req.UserId));
+                        command.Parameters.AddWithValue("@OptionId", req.OptionId);
+                        command.Parameters.AddWithValue("@NewToken", newToken);
+
+                        rowsAffected = command.ExecuteNonQuery();
+                     
+                        if (rowsAffected > 0)
+                        {
+                            return newToken;
+                        }
+                        else
+                        {
+                            return string.Empty;
+                        }
+                    }
+                }
+                _log.LogInformation($"Fin de Repository SaveSessionId OK");
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _log.LogError($"Fin de Repository SaveSessionId con KO. {ex}");
+                return string.Empty;
+            }
+        }
 
     }
 }
