@@ -164,7 +164,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                                     ContractName = reader.IsDBNull(reader.GetOrdinal("ContractName")) ? null : reader.GetString(reader.GetOrdinal("ContractName")),
                                     CreateDate = reader.GetDateTime(reader.GetOrdinal("CreateDate")),
                                     ModifyDate = reader.GetDateTime(reader.GetOrdinal("ModifyDate")),
-                                    BudgetOption = reader.IsDBNull(reader.GetOrdinal("BudgetOption")) ? string.Empty : reader.GetString(reader.GetOrdinal("BudgetOption")),
+                                    BudgetOption = reader.IsDBNull(reader.GetOrdinal("OptionDescription")) ? string.Empty : reader.GetString(reader.GetOrdinal("OptionDescription")),
                                     AutenticationToken = reader.IsDBNull(reader.GetOrdinal("AutenticationToken")) ? string.Empty : reader.GetGuid(reader.GetOrdinal("AutenticationToken")).ToString()
                                 };
 
