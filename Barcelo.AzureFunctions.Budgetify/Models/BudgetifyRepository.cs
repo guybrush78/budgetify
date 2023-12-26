@@ -135,7 +135,8 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                 {
                     connection.Open();
 
-                    string query = $"select [dbo].[Budget].*, [dbo].[Voting].BudgetOption from [dbo].[Budget] " +
+                    string query = $"select [dbo].[Budget].*, [dbo].[Voting].BudgetOption, [dbo].[Voting].AutenticationToken " +
+                        $" from [dbo].[Budget] " +
                         $"inner join [dbo].[Voting] on [dbo].[Budget].Id = [dbo].[Voting].BudgetId " +
                         $"where [dbo].[Voting].UserId = {UserId}";
 
@@ -162,7 +163,8 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                                     ContractName = reader.IsDBNull(reader.GetOrdinal("ContractName")) ? null : reader.GetString(reader.GetOrdinal("ContractName")),
                                     CreateDate = reader.GetDateTime(reader.GetOrdinal("CreateDate")),
                                     ModifyDate = reader.GetDateTime(reader.GetOrdinal("ModifyDate")),
-                                    BudgetOption = reader.IsDBNull(reader.GetOrdinal("BudgetOption")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("BudgetOption"))
+                                    BudgetOption = reader.IsDBNull(reader.GetOrdinal("BudgetOption")) ? null : (int?)reader.GetInt32(reader.GetOrdinal("BudgetOption")),
+                                    AutenticationToken = reader.IsDBNull(reader.GetOrdinal("AutenticationToken")) ? string.Empty : reader.GetGuid(reader.GetOrdinal("AutenticationToken")).ToString()
                                 };
 
                                 budgets.Add(budget);

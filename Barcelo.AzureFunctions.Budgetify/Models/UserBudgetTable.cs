@@ -9,5 +9,6 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
     public class UserBudgetTable : BudgetTable
     {
         public int? BudgetOption { get; set; }
+        public string AutenticationToken { get; set; }
     }
 }
