@@ -102,7 +102,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                                     To = reader.GetDateTime(reader.GetOrdinal("To")),
                                     ProposalFrom = reader.GetDateTime(reader.GetOrdinal("ProposalFrom")),
                                     ProposalTo = reader.GetDateTime(reader.GetOrdinal("ProposalTo")),
-                                    ContractFile = reader.IsDBNull(reader.GetOrdinal("ContractFile")) ? null : (byte[])reader["ContractFile"],
+                                    ContractFile = reader.IsDBNull(reader.GetOrdinal("ContractFile")) ? null : reader.GetString(reader.GetOrdinal("ContractFile")),
                                     ContractName = reader.IsDBNull(reader.GetOrdinal("ContractName")) ? null : reader.GetString(reader.GetOrdinal("ContractName")),
                                     CreateDate = reader.GetDateTime(reader.GetOrdinal("CreateDate")),
                                     ModifyDate = reader.GetDateTime(reader.GetOrdinal("ModifyDate"))
@@ -160,7 +160,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                                     To = reader.GetDateTime(reader.GetOrdinal("To")),
                                     ProposalFrom = reader.GetDateTime(reader.GetOrdinal("ProposalFrom")),
                                     ProposalTo = reader.GetDateTime(reader.GetOrdinal("ProposalTo")),
-                                    ContractFile = reader.IsDBNull(reader.GetOrdinal("ContractFile")) ? null : (byte[])reader["ContractFile"],
+                                    ContractFile = reader.IsDBNull(reader.GetOrdinal("ContractFile")) ? null : reader.GetString(reader.GetOrdinal("ContractFile")),
                                     ContractName = reader.IsDBNull(reader.GetOrdinal("ContractName")) ? null : reader.GetString(reader.GetOrdinal("ContractName")),
                                     CreateDate = reader.GetDateTime(reader.GetOrdinal("CreateDate")),
                                     ModifyDate = reader.GetDateTime(reader.GetOrdinal("ModifyDate")),
@@ -214,7 +214,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         command.Parameters.Add("@To", SqlDbType.DateTime).Value = request.To;
                         command.Parameters.Add("@ProposalFrom", SqlDbType.DateTime).Value = request.ProposalFrom;
                         command.Parameters.Add("@ProposalTo", SqlDbType.DateTime).Value = request.ProposalTo;
-                        command.Parameters.Add("@ContractFile", SqlDbType.VarBinary).Value = (object)request.ContractFile ?? DBNull.Value;
+                        command.Parameters.AddWithValue("@ContractFile", request.ContractFile ?? (object)DBNull.Value);
                         command.Parameters.AddWithValue("@ContractName", request.ContractName ?? (object)DBNull.Value);
 
                         int? insertedId = (int?)await command.ExecuteScalarAsync();
@@ -416,7 +416,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                                     To = reader.GetDateTime(reader.GetOrdinal("To")),
                                     ProposalFrom = reader.GetDateTime(reader.GetOrdinal("ProposalFrom")),
                                     ProposalTo = reader.GetDateTime(reader.GetOrdinal("ProposalTo")),
-                                    ContractFile = reader.IsDBNull(reader.GetOrdinal("ContractFile")) ? null : (byte[])reader["ContractFile"],
+                                    ContractFile = reader.IsDBNull(reader.GetOrdinal("ContractFile")) ? null : reader.GetString(reader.GetOrdinal("ContractFile")),
                                     ContractName = reader.IsDBNull(reader.GetOrdinal("ContractName")) ? null : reader.GetString(reader.GetOrdinal("ContractName")),
                                     CreateDate = reader.GetDateTime(reader.GetOrdinal("CreateDate")),
                                     ModifyDate = reader.GetDateTime(reader.GetOrdinal("ModifyDate"))

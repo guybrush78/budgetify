@@ -13,7 +13,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         public DateTime To { get; set; }
         public DateTime ProposalFrom { get; set; }
         public DateTime ProposalTo { get; set; }
-        public byte[] ContractFile { get; set; }
+        public string ContractFile { get; set; }
         public string ContractName { get; set; }
         public DateTime CreateDate { get; set; }
         public DateTime ModifyDate { get; set; }

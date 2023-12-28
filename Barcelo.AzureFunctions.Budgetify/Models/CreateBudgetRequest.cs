@@ -32,7 +32,8 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
         [Required]
         public DateTime ProposalTo { get; set; }
 
-        public byte[] ContractFile { get; set; }
+        [StringLength(1000)]
+        public string ContractFile { get; set; }
 
         [StringLength(100)]
         public string ContractName { get; set; }
