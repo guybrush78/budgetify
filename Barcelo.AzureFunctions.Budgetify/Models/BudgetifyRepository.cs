@@ -331,8 +331,14 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                     await connection.OpenAsync();
 
                     string query = @"
-                        UPDATE [Budget] SET [Title] = @Title, [Description] = @Description, [From] = @From, [To] = @To,
-                        [ProposalFrom] = @ProposalFrom, [ProposalTo] = @ProposalTo
+                        UPDATE [Budget] SET 
+                            [Title] = @Title, 
+                            [Description] = @Description, 
+                            [From] = @From, 
+                            [To] = @To,
+                            [ProposalFrom] = @ProposalFrom, 
+                            [ProposalTo] = @ProposalTo,
+                            [ContractFile] = CASE WHEN @ContractFile IS NOT NULL AND @ContractFile <> '' THEN @ContractFile ELSE [ContractFile] END
                         WHERE [Id] = @BudgetId";
 
                     using (SqlCommand command = new SqlCommand(query, connection))
@@ -344,7 +350,8 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         command.Parameters.Add("@To", SqlDbType.DateTime).Value = request.To;
                         command.Parameters.Add("@ProposalFrom", SqlDbType.DateTime).Value = request.From; //Por ahora la misma fecha
                         command.Parameters.Add("@ProposalTo", SqlDbType.DateTime).Value = request.To; //Por ahora la misma fecha
-
+                        command.Parameters.AddWithValue("@ContractFile", request.ContractFile ?? string.Empty);
+                        
                         rowsAffected = command.ExecuteNonQuery();
                     } //Cerramos conexión porque ahora abriremos otra
 
