@@ -32,6 +32,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
             try
             {
                 var requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                log.LogInformation(requestBody);
                 MapUsersToBudgetRequest data = JsonConvert.DeserializeObject<MapUsersToBudgetRequest>(requestBody);
 
                 var result = await this.runner.RunAsync(data);
