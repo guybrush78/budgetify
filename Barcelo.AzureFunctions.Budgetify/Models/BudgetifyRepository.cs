@@ -712,7 +712,13 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         SELECT @BudgetId, U.Id, NEWID()
                         FROM [dbo].[User] U
                         INNER JOIN #TempDNI D ON U.DNI = D.DNI
-                        WHERE U.type = 3";
+                        WHERE U.type = 3
+                            AND NOT EXISTS (
+                                        SELECT 1
+                                        FROM [dbo].[Voting] V
+                                        WHERE V.BudgetId = @BudgetId
+                                        AND V.UserId = U.Id
+                                    )";
 
                     using (SqlCommand insertCommand = new SqlCommand(insertQuery, connection))
                     {
