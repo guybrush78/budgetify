@@ -37,6 +37,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
 
                 var result = await this.runner.RunAsync(data);
 
+                log.LogInformation($"Result: {result}");
                 int statuscode;
                 string statusMessage;
                 int userMapped = 0;
