@@ -51,7 +51,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                                 {
                                     Id = reader.GetInt32(reader.GetOrdinal("Id")),
                                     BudgetId = reader.GetInt32(reader.GetOrdinal("BudgetId")),
-                                    OptionDescription = reader.GetString(reader.GetOrdinal("OptionDescription"))                                    
+                                    OptionDescription = reader.GetString(reader.GetOrdinal("OptionDescription"))
                                 };
 
                                 BudgetOptions.Add(BudgetOption);
@@ -351,7 +351,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         command.Parameters.Add("@ProposalFrom", SqlDbType.DateTime).Value = request.From; //Por ahora la misma fecha
                         command.Parameters.Add("@ProposalTo", SqlDbType.DateTime).Value = request.To; //Por ahora la misma fecha
                         command.Parameters.AddWithValue("@ContractFile", request.ContractFile ?? string.Empty);
-                        
+
                         rowsAffected = command.ExecuteNonQuery();
                     } //Cerramos conexión porque ahora abriremos otra
 
@@ -378,7 +378,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                     {
                         return false;
                     }
-                    
+
                 }
 
                 return true;
@@ -611,7 +611,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                                     userData = jsonUserData
                                 };
 
-                                
+
 
                                 return response;
                             }
@@ -655,7 +655,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                         command.Parameters.AddWithValue("@NewToken", newToken);
 
                         rowsAffected = command.ExecuteNonQuery();
-                     
+
                         if (rowsAffected > 0)
                         {
                             return newToken;
@@ -676,5 +676,66 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
             }
         }
 
+
+        public async Task<int> MapUsersToBudget(MapUsersToBudgetRequest req)
+        {
+            int rowsAffected = 0;
+            try
+            {
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    // Crear la tabla temporal
+                    var createTableQuery = "CREATE TABLE #TempDNI (DNI NVARCHAR(255) NOT NULL)";
+                    using (SqlCommand createTableCommand = new SqlCommand(createTableQuery, connection))
+                    {
+                        createTableCommand.ExecuteNonQuery();
+                    }
+
+                    // Insertar datos en la tabla temporal
+                    var insertDataQuery = "INSERT INTO #TempDNI (DNI) VALUES (@DNI)";
+                    foreach (var dni in req.UserList)
+                    {
+                        using (SqlCommand insertDataCommand = new SqlCommand(insertDataQuery, connection))
+                        {
+                            insertDataCommand.Parameters.AddWithValue("@DNI", dni);
+                            insertDataCommand.ExecuteNonQuery();
+                        }
+                    }
+
+                    // Utilizar la tabla temporal en la consulta principal
+                    string insertQuery = @"
+                        INSERT INTO [dbo].[Voting] (BudgetId, UserId, AutenticationToken)
+                        SELECT @BudgetId, U.Id, NEWID()
+                        FROM [dbo].[User] U
+                        INNER JOIN #TempDNI D ON U.DNI = D.DNI
+                        WHERE U.type = 3";
+
+                    using (SqlCommand insertCommand = new SqlCommand(insertQuery, connection))
+                    {
+                        insertCommand.Parameters.AddWithValue("@BudgetId", req.BudgetId);
+                        rowsAffected = insertCommand.ExecuteNonQuery();
+                    }
+
+                    // Eliminar la tabla temporal
+                    var dropTableQuery = "DROP TABLE #TempDNI";
+                    using (SqlCommand dropTableCommand = new SqlCommand(dropTableQuery, connection))
+                    {
+                        dropTableCommand.ExecuteNonQuery();
+                    }
+                }
+                _log.LogInformation($"Fin de Repository MapUsersToBudget OK");
+                return rowsAffected;
+            }
+            catch (Exception ex)
+            {
+                _log.LogError($"Fin de Repository MapUsersToBudget con KO. {ex}");
+                return 0;
+            }
+        }
     }
-}
+
+    }
