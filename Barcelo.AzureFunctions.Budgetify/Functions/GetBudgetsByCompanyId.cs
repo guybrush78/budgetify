@@ -60,6 +60,7 @@ namespace Barcelo.AzureFunctions.Budgetify.Functions
                     data = jsonResult
                 };
 
+                log.LogInformation($"Response: {jsonResult}");
                 return new JsonResult(jsonResponse)
                 {
                     StatusCode = statuscode
