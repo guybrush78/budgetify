@@ -23,6 +23,7 @@ namespace Barcelo.AzureFunctions.Budgetify
             builder.Services.AddTransient<ILoginRunner, LoginRunner>();
             builder.Services.AddTransient<BudgetifyRepository>();
             builder.Services.AddTransient <IMapUsersToBudgetRunner, MapUsersToBudgetRunner>();
+            builder.Services.AddTransient<IGetBudgetsByCompanyIdRunner, GetBudgetsByCompanyIdRunner>();
         }
     }
 }
