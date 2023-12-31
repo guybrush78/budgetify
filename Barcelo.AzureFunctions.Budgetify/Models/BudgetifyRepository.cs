@@ -801,6 +801,60 @@ namespace Barcelo.AzureFunctions.Budgetify.Models
                 return 0;
             }
         }
-    }
+
+
+        public async Task<string> UpdateProposal(UpdateProposalRequest request)
+        {
+            try
+            {
+                string connectionString = _configuration.GetConnectionString("DefaultConnection");
+                string newToken = Guid.NewGuid().ToString();
+                int inserted = 0;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    await connection.OpenAsync();
+
+                    string query = @"
+                        INSERT INTO [dbo].[Proposal] 
+                        ([UserId], [BudgetId], [ProposalFile], [AutenticationToken])
+                        OUTPUT INSERTED.Id
+                        VALUES 
+                        (@UserId, @BudgetId, @ProposalFile, @AutenticationToken)";
+
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@UserId", int.Parse(request.CompanyId));
+                        command.Parameters.AddWithValue("@BudgetId", request.BudgetId);
+                        command.Parameters.AddWithValue("@ProposalFile", request.ProposalContract);
+                        command.Parameters.AddWithValue("@AutenticationToken", newToken);                        
+
+                        int? insertedId = (int?)await command.ExecuteScalarAsync();
+                        if (insertedId.HasValue)
+                        {
+                            inserted = insertedId.Value;
+                        }
+                    }
+                }
+                if(inserted > 0)
+                {
+                    return newToken;
+                }
+                else
+                {
+                    return string.Empty;
+                }
+                
+            }
+            catch (Exception ex)
+            {
+                string pair = $"CompanyId: {request.CompanyId}, BudgetId: {request.BudgetId}";
+                _log.LogError($"Repository UpdateProposal {pair}. Error: {ex}");
+                return string.Empty;
+            }
+        }
+
+
 
     }
+
+}
